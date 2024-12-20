@@ -1,328 +1,488 @@
-#include <iostream>  // Подключение библиотеки для ввода/вывода
+#include "Car_service.hpp" // Подключаем заголовочный файл, который содержит определения классов и функций автосервиса
 
-#include <vector>    // Подключение библиотеки для работы с контейнером vector
+#include <limits>          // Для работы с пределами чисел (например, очищение ввода)
 
-#include <string>    // Подключение библиотеки для работы со строками
+#include <cassert>         // Для использования макроса assert для проверки условий
 
-#include <algorithm> // Подключение библиотеки для использования алгоритмов (например, sort)
+#include <memory>          // Для работы с умными указателями (shared_ptr)
 
-using namespace std; // Использование стандартного пространства имен
+#include <iostream>        // Для работы с потоками ввода/вывода
 
-// Класс Car представляет автомобиль
+using namespace std; // Используем пространство имен std для удобства
 
-class Car {
+int main() {
 
-private:
+    // Создаем вектор умных указателей на объекты класса Car
 
-    string make;          // Марка автомобиля (например, Toyota, BMW)
+    vector<shared_ptr<Car>> cars;
 
-    string model;         // Модель автомобиля (например, Corolla, X5)
+    // Создаем вектор умных указателей на объекты класса Client
 
-    string licensePlate;  // Номерной знак автомобиля
+    vector<shared_ptr<Client>> clients;
 
-public:
+    // Создаем объект автосервиса с именем "My Auto Service"
 
-    // Конструктор для инициализации автомобиля с указанными значениями
+    AutoService service("My Auto Service");
 
-    Car(string make, string model, string licensePlate)
+    bool running = true; // Флаг для работы цикла меню
 
-        : make(make), model(model), licensePlate(licensePlate) {}
+    int choice;          // Переменная для хранения выбора пользователя
 
-    // Метод для получения информации об автомобиле в виде строки
+    // Основной цикл программы
 
-    string getDetails() const {
+    while (running) {
 
-        return "Make: " + make + ", Model: " + model + ", License Plate: " + licensePlate;
+        // Вывод меню действий для пользователя
 
-    }
+        cout << "1. Добавить клиента\n";
 
-    // Метод для получения номерного знака автомобиля
+        cout << "2. Показать клиентов\n";
 
-    string getLicensePlate() const {
+        cout << "3. Добавить автомобиль\n";
 
-        return licensePlate;
+        cout << "4. Показать автомобили\n";
 
-    }
+        cout << "5. Добавить сотрудника\n";
 
-};
+        cout << "6. Показать сотрудников\n";
 
-// Базовый класс Person для представления человека
+        cout << "7. Добавить услугу\n";
 
-class Person {
+        cout << "8. Показать услуги\n";
 
-protected:
+        cout << "9. Оформить заказ\n";
 
-    string name; // Имя человека
+        cout << "10. Показать заказы\n";
 
-public:
+        cout << "11. Удалить заказ\n";
 
-    // Конструктор для инициализации имени
+        cout << "12. Выход\n";
 
-    Person(string name) : name(name) {}
+        // Запрашиваем у пользователя выбор действия
 
-    // Метод для получения имени человека
+        cout << "Выберите действие: ";
 
-    string getName() const {
+        cin >> choice;
 
-        return name;
+        // Реализация действий в зависимости от выбора пользователя
 
-    }
+        switch (choice) {
 
-};
+            case 1: { // Добавление клиента
 
-// Класс Client представляет клиента автосервиса и наследует класс Person
+                string name, phoneNumber;
 
-class Client : public Person {
+                // Запрашиваем имя клиента
 
-private:
+                cout << "Введите имя клиента: ";
 
-    string phoneNumber;       // Номер телефона клиента
+                cin.ignore(); // Игнорируем символ новой строки
 
-    vector<Car> cars;         // Список автомобилей, принадлежащих клиенту
+                getline(cin, name); // Считываем строку
 
-public:
+                // Запрашиваем номер телефона клиента
 
-    // Конструктор для инициализации клиента с именем и номером телефона
+                cout << "Введите номер телефона клиента: ";
 
-    Client(string name, string phoneNumber) : Person(name), phoneNumber(phoneNumber) {}
+                getline(cin, phoneNumber);
 
-    // Метод для добавления автомобиля в список клиента
+                // Создаем объект клиента и добавляем его в вектор клиентов
 
-    void addCar(const Car& car) {
+                auto client = make_shared<Client>(name, phoneNumber);
 
-        cars.push_back(car);
+                clients.push_back(client);
 
-    }
+                // Уведомляем пользователя об успешном добавлении
 
-    // Метод для получения списка автомобилей клиента
+                cout << "Клиент успешно добавлен!" << endl;
 
-    vector<Car>& getCars() {
+                break;
 
-        return cars;
+            }
 
-    }
+            case 2: { // Вывод списка клиентов
 
-    // Метод для получения номера телефона клиента
+                cout << "<- Список клиентов ->" << endl;
 
-    string getPhoneNumber() const {
+                // Перебираем всех клиентов и выводим их данные
 
-        return phoneNumber;
+                for (const auto& client : clients) {
 
-    }
+                    cout << "Имя: " << client->getName() << ", Телефон: " << client->getPhoneNumber() << endl;
 
-};
+                }
 
-// Класс Service представляет услугу автосервиса
+                break;
 
-class Service {
+            }
 
-private:
+            case 3: { // Добавление автомобиля
 
-    string description; // Описание услуги (например, "Замена масла")
+                string make, model, licensePlate, clientName;
 
-    double price;       // Стоимость услуги
+                // Запрашиваем данные автомобиля
 
-public:
+                cout << "Введите марку автомобиля: ";
 
-    // Конструктор для инициализации услуги с описанием и ценой
+                cin.ignore();
 
-    Service(string description, double price) : description(description), price(price) {}
+                getline(cin, make);
 
-    // Метод для получения описания услуги
+                cout << "Введите модель автомобиля: ";
 
-    string getDescription() const {
+                getline(cin, model);
 
-        return description;
+                cout << "Введите номерной знак автомобиля: ";
 
-    }
+                getline(cin, licensePlate);
 
-    // Метод для получения стоимости услуги
+                cout << "Введите имя клиента: ";
 
-    double getPrice() const {
+                getline(cin, clientName);
 
-        return price;
+                // Ищем клиента с указанным именем
 
-    }
+                auto it = find_if(clients.begin(), clients.end(), [&clientName](const shared_ptr<Client>& client) {
 
-};
+                    return client->getName() == clientName;
 
-// Класс Employee представляет сотрудника автосервиса и наследует класс Person
+                });
 
-class Employee : public Person {
+                if (it != clients.end()) {
 
-private:
+                    // Если клиент найден, создаем автомобиль и привязываем его к клиенту
 
-    string position; // Должность сотрудника (например, "Механик")
+                    auto car = make_shared<Car>(make, model, licensePlate);
 
-public:
+                    (*it)->addCar(*car);
 
-    // Конструктор для инициализации сотрудника с именем и должностью
+                    cars.push_back(car);
 
-    Employee(string name, string position) : Person(name), position(position) {}
+                    cout << "Автомобиль успешно добавлен!" << endl;
 
-    // Метод для получения должности сотрудника
+                } else {
 
-    string getPosition() const {
+                    // Если клиент не найден, выводим сообщение
 
-        return position;
+                    cout << "Клиент не найден." << endl;
 
-    }
+                }
 
-};
+                break;
 
-// Класс Order представляет заказ автосервиса
+            }
 
-class Order {
+            case 4: { // Вывод списка автомобилей
 
-private:
+                cout << "<- Список автомобилей ->" << endl;
 
-    string clientName;       // Имя клиента, связанного с заказом
+                // Перебираем все автомобили
 
-    string carDetails;       // Детали автомобиля (например, "Toyota Corolla")
+                for (const auto& car : cars) {
 
-    string serviceDetails;   // Детали услуги (например, "Замена масла")
+                    string ownerName = "Неизвестно"; // По умолчанию владелец неизвестен
 
-    string employeeName;     // Имя сотрудника, выполняющего заказ
+                    // Ищем владельца автомобиля
 
-    double totalCost;        // Общая стоимость заказа
+                    for (const auto& client : clients) {
 
-    string orderDate;        // Дата заказа
+                        auto& clientCars = client->getCars();
 
-public:
+                        auto it = find_if(clientCars.begin(), clientCars.end(), [&car](const Car& clientCar) {
 
-    // Конструктор для создания заказа с указанными параметрами
+                            return clientCar.getLicensePlate() == car->getLicensePlate();
 
-    Order(string clientName, string carDetails, string serviceDetails, string employeeName, double totalCost, const string& orderDate)
+                        });
 
-        : clientName(clientName), carDetails(carDetails), serviceDetails(serviceDetails),
+                        if (it != clientCars.end()) {
 
-          employeeName(employeeName), totalCost(totalCost), orderDate(orderDate) {}
+                            ownerName = client->getName(); // Привязываем имя клиента как владельца
 
-    // Метод для получения информации о заказе в виде строки
+                            break;
 
-    string getDetails() const {
+                        }
 
-        return "Client: " + clientName + ", Car: " + carDetails + ", Service: " + serviceDetails + 
+                    }
 
-               ", Employee: " + employeeName + ", Total: $" + to_string(totalCost) + ", Date: " + orderDate;
+                    // Выводим данные автомобиля и его владельца
 
-    }
+                    cout << car->getDetails() << ", Владелец: " << ownerName << endl;
 
-};
+                }
 
-// Класс AutoService представляет автосервис и его функциональность
+                break;
 
-class AutoService {
+            }
 
-private:
+            case 5: { // Добавление сотрудника
 
-    string name;                   // Название автосервиса
+                string name, position;
 
-    vector<Service> services;      // Список услуг, предоставляемых автосервисом
+                // Запрашиваем данные сотрудника
 
-    vector<Employee> employees;    // Список сотрудников автосервиса
+                cout << "Введите имя сотрудника: ";
 
-    vector<Order> orders;          // Список заказов, выполненных автосервисом
+                cin.ignore();
 
-public:
+                getline(cin, name);
 
-    // Конструктор для инициализации автосервиса с названием
+                cout << "Введите должность сотрудника: ";
 
-    AutoService(string name) : name(name) {}
+                getline(cin, position);
 
-    // Метод для добавления новой услуги в список
+                // Добавляем сотрудника в автосервис
 
-    void addService(const Service& service) {
+                service.addEmployee(Employee(name, position));
 
-        services.push_back(service);
+                cout << "Сотрудник успешно добавлен!" << endl;
 
-    }
+                break;
 
-    // Метод для добавления нового сотрудника в список
+            }
 
-    void addEmployee(const Employee& employee) {
+            case 6: { // Вывод списка сотрудников
 
-        employees.push_back(employee);
+                service.listEmployees(); // Вызываем метод для вывода сотрудников
 
-    }
+                break;
 
-    // Метод для создания нового заказа и добавления его в список
+            }
 
-    void createOrder(const string& clientName, const string& carDetails, const string& serviceDetails, const string& employeeName, double totalCost, const string& orderDate) {
+            case 7: { // Добавление услуги
 
-        orders.emplace_back(clientName, carDetails, serviceDetails, employeeName, totalCost, orderDate);
+                string description;
 
-    }
+                double price;
 
-    // Метод для вывода списка услуг на экран
+                // Запрашиваем данные услуги
 
-    void listServices() const {
+                cout << "Введите описание услуги: ";
 
-        for (const auto& service : services) {
+                cin.ignore();
 
-            cout << service.getDescription() << " - $" << service.getPrice() << endl;
+                getline(cin, description);
+
+                cout << "Введите стоимость услуги: ";
+
+                cin >> price;
+
+                // Добавляем услугу в автосервис
+
+                service.addService(Service(description, price));
+
+                cout << "Услуга успешно добавлена!" << endl;
+
+                break;
+
+            }
+
+            case 8: { // Вывод списка услуг
+
+                service.listServices(); // Вызываем метод для вывода услуг
+
+                break;
+
+            }
+
+            case 9: {
+
+                string licensePlate, serviceName, employeeName;
+
+                cout << "<- Список автомобилей ->" << endl;
+
+                for (const auto& car : cars) {
+
+                    string ownerName = "Неизвестно";  
+
+                    for (const auto& client : clients) {
+
+                        auto& clientCars = client->getCars();
+
+                        auto it = find_if(clientCars.begin(), clientCars.end(), [&car](const Car& clientCar) {
+
+                            return clientCar.getLicensePlate() == car->getLicensePlate();
+
+                        });
+
+                        if (it != clientCars.end()) {
+
+                            ownerName = client->getName();  // Привязываем имя клиента как владельца
+
+                            break;
+
+                        }
+
+                    }
+
+                    cout << car->getDetails() << ", Владелец: " << ownerName << endl;
+
+                }
+
+                cout << "Введите номерной знак автомобиля: ";
+
+                cin.ignore();
+
+                getline(cin, licensePlate);
+
+                auto carIt = find_if(cars.begin(), cars.end(), [&licensePlate](const shared_ptr<Car>& car) {
+
+                    return car->getLicensePlate() == licensePlate;
+
+                });
+
+                if (carIt == cars.end()) {
+
+                    cout << "Автомобиль не найден. Заказ отменен." << endl;
+
+                    break;
+
+                }
+
+                string clientName = "Неизвестно";
+
+                for (const auto& client : clients) {
+
+                    auto& clientCars = client->getCars();
+
+                    auto it = find_if(clientCars.begin(), clientCars.end(), [&carIt](const Car& clientCar) {
+
+                        return clientCar.getLicensePlate() == (*carIt)->getLicensePlate();
+
+                    });
+
+                    if (it != clientCars.end()) {
+
+                        clientName = client->getName();
+
+                        break;
+
+                    }
+
+                }
+
+                if (clientName == "Неизвестно") {
+
+                    cout << "Клиент для этого автомобиля не найден. Заказ отменен." << endl;
+
+                    break;
+
+                }
+
+                cout << "<- Список услуг ->" << endl;
+
+                service.listServices();
+
+                cout << "Введите название услуги: ";
+
+                getline(cin, serviceName);
+
+                auto serviceIt = find_if(service.getServices().begin(), service.getServices().end(), [&serviceName](const Service& srv) {
+
+                    return srv.getDescription() == serviceName;
+
+                });
+
+                if (serviceIt == service.getServices().end()) {
+
+                    cout << "Услуга не найдена. Заказ отменен." << endl;
+
+                    break;
+
+                }
+
+                cout << "<- Список сотрудников ->" << endl;
+
+                service.listEmployees();
+
+                cout << "Введите имя сотрудника: ";
+
+                getline(cin, employeeName);
+
+                if (none_of(service.getEmployees().begin(), service.getEmployees().end(), [&employeeName](const Employee& emp) {
+
+                    return emp.getName() == employeeName;
+
+                })) {
+
+                    cout << "Сотрудник не найден. Заказ отменен." << endl;
+
+                    break;
+
+                }
+
+                string date;
+
+                cout << "Введите дату заказа (в формате ДД-ММ-ГГГГ): ";
+
+                getline(cin, date);
+
+                double totalCost = serviceIt->getPrice();
+
+                service.createOrder(clientName, licensePlate, serviceName, employeeName, totalCost, date);
+
+                cout << "Заказ успешно оформлен!" << endl;
+
+                break;
+
+            }
+
+            case 10: { // Вывод списка заказов
+
+                service.listOrders(); // Вызываем метод для вывода заказов
+
+                break;
+
+            }
+
+            case 11: { // Удаление заказа
+
+                size_t orderIndex;
+
+                cout << "Введите номер заказа для удаления: ";
+
+                cin >> orderIndex;
+
+                // Удаляем заказ по индексу
+
+                service.deleteOrder(orderIndex - 1);
+
+                break;
+
+            }
+
+            case 12: { // Выход из программы
+
+                running = false;
+
+                break;
+
+            }
+
+            default: { // Обработка некорректного ввода
+
+                cout << "Неверный выбор, попробуйте снова." << endl;
+
+                break;
+
+            }
 
         }
 
-    }
+        // Обработка ошибок ввода
 
-    // Метод для вывода списка сотрудников на экран
+        if (cin.fail()) {
 
-    void listEmployees() const {
+            cin.clear(); // Сбрасываем флаг ошибки
 
-        for (const auto& employee : employees) {
-
-            cout << employee.getName() << " - " << employee.getPosition() << endl;
+            while (getchar() != '\n'); // Очищаем буфер
 
         }
 
-    }
-
-    // Метод для вывода списка заказов на экран
-
-    void listOrders() const {
-
-        for (size_t i = 0; i < orders.size(); ++i) {
-
-            cout << i + 1 << ") " << orders[i].getDetails() << endl; // Индексация начинается с 1
-
-        }
+        cout << endl; // Пустая строка для удобства
 
     }
 
-    // Метод для удаления заказа по индексу
+    return 0; // Завершаем программу
 
-    void deleteOrder(size_t index) {
-
-        if (index < orders.size()) {
-
-            orders.erase(orders.begin() + index); // Удаление заказа по индексу
-
-            cout << "Order removed successfully!" << endl;
-
-        } else {
-
-            cout << "Invalid order index." << endl; // Сообщение об ошибке, если индекс некорректный
-
-        }
-
-    }
-
-    // Метод для получения списка услуг (доступ для других частей программы)
-
-    vector<Service>& getServices() {
-
-        return services;
-
-    }
-
-    // Метод для получения списка сотрудников (доступ для других частей программы)
-
-    vector<Employee>& getEmployees() {
-
-        return employees;
-
-    }
-
-};
+}
 
